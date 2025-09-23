@@ -52,18 +52,18 @@ class PetListResource(Resource):
             if page_size < 1 or page_size > 100:
                 page_size = 20
             
+            filters = {}
             if nome:
-                pets, total_count = PetService.search_pets_by_name(nome, page_number, page_size)
-            elif tipo:
-                pets, total_count = PetService.search_pets_by_tipo(tipo, page_number, page_size)
-            elif cidade:
-                pets, total_count = PetService.search_pets_by_city(cidade, page_number, page_size)
-            elif start_date and end_date:
-                start_dt = datetime.fromisoformat(start_date)
-                end_dt = datetime.fromisoformat(end_date)
-                pets, total_count = PetService.search_pets_by_date_range(start_dt, end_dt, page_number, page_size)
-            else:
-                pets, total_count = PetService.get_all_pets(page_number, page_size)
+                filters['nome'] = nome
+            if tipo:
+                filters['tipo'] = tipo
+            if cidade:
+                filters['cidade'] = cidade
+            if start_date and end_date:
+                filters['start_date'] = datetime.fromisoformat(start_date)
+                filters['end_date'] = datetime.fromisoformat(end_date)
+            
+            pets, total_count = PetService.search_pets_with_filters(filters, page_number, page_size)
             
             result = pets_schema.dump(pets)
             

@@ -58,6 +58,51 @@ class PetService:
             raise
     
     @staticmethod
+    def search_pets_with_filters(filters: dict, page_number: int = 1, page_size: int = 20) -> tuple[List[Pet], int]:
+        try:
+            base_query = Pet.query.options(db.joinedload(Pet.endereco))
+            
+            if 'nome' in filters:
+                base_query = base_query.filter(Pet.nome.ilike(f'%{filters["nome"]}%'))
+            
+            if 'tipo' in filters:
+                base_query = base_query.filter(Pet.tipo == filters['tipo'])
+            
+            if 'cidade' in filters:
+                base_query = base_query.join(Endereco).filter(
+                    Endereco.cidade.ilike(f'%{filters["cidade"]}%')
+                )
+            
+            if 'start_date' in filters and 'end_date' in filters:
+                base_query = base_query.filter(
+                    Pet.data_desaparecimento.between(filters['start_date'], filters['end_date'])
+                )
+            
+            base_query = base_query.order_by(Pet.created_at.desc())
+            
+            total_count = base_query.count()
+            
+            offset = (page_number - 1) * page_size
+            pets = base_query.offset(offset).limit(page_size).all()
+            
+            filter_description = []
+            if 'nome' in filters:
+                filter_description.append(f"nome: {filters['nome']}")
+            if 'tipo' in filters:
+                filter_description.append(f"tipo: {filters['tipo']}")
+            if 'cidade' in filters:
+                filter_description.append(f"cidade: {filters['cidade']}")
+            if 'start_date' in filters and 'end_date' in filters:
+                filter_description.append(f"data: {filters['start_date']} - {filters['end_date']}")
+            
+            filter_str = ", ".join(filter_description) if filter_description else "sem filtros"
+            logger.info(f"Found {len(pets)} pets with filters ({filter_str}) (page {page_number}, total: {total_count})")
+            return pets, total_count
+        except Exception as e:
+            logger.error(f"Error searching pets with filters: {str(e)}")
+            raise
+
+    @staticmethod
     def update_pet_with_endereco(pet_id: int, pet_data: dict) -> Optional[Pet]:
         try:
             pet = Pet.query.get(pet_id)
@@ -107,78 +152,4 @@ class PetService:
         except Exception as e:
             logger.error(f"Error deleting pet {pet_id}: {str(e)}")
             db.session.rollback()
-            raise
-    
-    @staticmethod
-    def search_pets_by_name(nome: str, page_number: int = 1, page_size: int = 20) -> tuple[List[Pet], int]:
-        try:
-            base_query = Pet.query.options(db.joinedload(Pet.endereco)).filter(
-                Pet.nome.ilike(f'%{nome}%')
-            )
-            
-            total_count = base_query.count()
-            
-            offset = (page_number - 1) * page_size
-            pets = base_query.offset(offset).limit(page_size).all()
-            
-            logger.info(f"Found {len(pets)} pets with name containing: {nome} (page {page_number}, total: {total_count})")
-            return pets, total_count
-        except Exception as e:
-            logger.error(f"Error searching pets by name {nome}: {str(e)}")
-            raise
-    
-    @staticmethod
-    def search_pets_by_tipo(tipo: str, page_number: int = 1, page_size: int = 20) -> tuple[List[Pet], int]:
-        try:
-            base_query = Pet.query.options(db.joinedload(Pet.endereco)).filter(
-                Pet.tipo == tipo
-            )
-            
-            total_count = base_query.count()
-            
-            offset = (page_number - 1) * page_size
-            pets = base_query.offset(offset).limit(page_size).all()
-            
-            logger.info(f"Found {len(pets)} pets of type: {tipo} (page {page_number}, total: {total_count})")
-            return pets, total_count
-        except Exception as e:
-            logger.error(f"Error searching pets by type {tipo}: {str(e)}")
-            raise
-    
-    @staticmethod
-    def search_pets_by_city(cidade: str, page_number: int = 1, page_size: int = 20) -> tuple[List[Pet], int]:
-        try:
-            base_query = Pet.query.options(db.joinedload(Pet.endereco)).join(
-                Endereco
-            ).filter(
-                Endereco.cidade.ilike(f'%{cidade}%')
-            )
-            
-            total_count = base_query.count()
-            
-            offset = (page_number - 1) * page_size
-            pets = base_query.offset(offset).limit(page_size).all()
-            
-            logger.info(f"Found {len(pets)} pets that disappeared in city: {cidade} (page {page_number}, total: {total_count})")
-            return pets, total_count
-        except Exception as e:
-            logger.error(f"Error searching pets by city {cidade}: {str(e)}")
-            raise
-    
-    @staticmethod
-    def search_pets_by_date_range(start_date: datetime, end_date: datetime, page_number: int = 1, page_size: int = 20) -> tuple[List[Pet], int]:
-        try:
-            base_query = Pet.query.options(db.joinedload(Pet.endereco)).filter(
-                Pet.data_desaparecimento.between(start_date, end_date)
-            )
-            
-            total_count = base_query.count()
-            
-            offset = (page_number - 1) * page_size
-            pets = base_query.offset(offset).limit(page_size).all()
-            
-            logger.info(f"Found {len(pets)} pets that disappeared between {start_date} and {end_date} (page {page_number}, total: {total_count})")
-            return pets, total_count
-        except Exception as e:
-            logger.error(f"Error searching pets by date range: {str(e)}")
             raise
