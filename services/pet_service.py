@@ -49,7 +49,7 @@ class PetService:
             total_count = Pet.query.count()
             
             offset = (page_number - 1) * page_size
-            pets = Pet.query.options(db.joinedload(Pet.endereco)).offset(offset).limit(page_size).all()
+            pets = Pet.query.options(db.joinedload(Pet.endereco)).order_by(Pet.created_at.desc()).offset(offset).limit(page_size).all()
             
             logger.info(f"Retrieved {len(pets)} pets (page {page_number}, total: {total_count})")
             return pets, total_count
