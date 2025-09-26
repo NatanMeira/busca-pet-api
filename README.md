@@ -33,8 +33,8 @@ API REST para gerenciamento de pets perdidos desenvolvida com Flask e SQLAlchemy
 ### 2. Clone o repositório
 
 ```bash
-git clone <url-do-repositorio>
-cd api
+git clone https://github.com/NatanMeira/busca-pet-api.git
+cd busca-pet-api
 ```
 
 ### 3. Crie um ambiente virtual
