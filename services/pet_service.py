@@ -147,6 +147,7 @@ class PetService:
                 return False
             
             pet.delete()
+            EnderecoService.delete_endereco(pet.endereco_id)
             logger.info(f"Pet deleted with ID: {pet_id}")
             return True
         except Exception as e:

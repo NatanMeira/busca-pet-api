@@ -52,4 +52,20 @@ class EnderecoService:
             logger.error(f"Error updating endereco {endereco_id}: {str(e)}")
             db.session.rollback()
             raise
+
+    @staticmethod
+    def delete_endereco(endereco_id: int) -> bool:
+        try:
+            endereco = Endereco.query.get(endereco_id)
+            if not endereco:
+                logger.warning(f"Endereco not found for deletion with ID: {endereco_id}")
+                return False
+            
+            endereco.delete()
+            logger.info(f"Endereco deleted with ID: {endereco_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting endereco {endereco_id}: {str(e)}")
+            db.session.rollback()
+            raise
     
